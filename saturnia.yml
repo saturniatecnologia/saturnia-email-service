@@ -1,0 +1,80 @@
+# saturnia.yml
+# Arquivo de orquestração declarativa para a plataforma Saturnia
+
+version: "1.0"
+
+# Configuração global
+deployment:
+  project: saturnia-demo
+  environment: production
+  defaultNetwork: saturnia-net
+  autoExpose: true     # Se true, o primeiro serviço com porta exposta será publicado automaticamente
+  entryService: web    # Define explicitamente qual é o ponto de entrada HTTP
+  domains:
+    - domain: app.saturnia.io
+      service: web
+      proxy: true            # se true, irá criar automaticamente no nginx npm
+      ssl: true              # ativa ou não SSL via Nginx NPM
+      forceHttps: true
+    - domain: api.saturnia.io
+      service: api
+      proxy: true
+      ssl: true
+      forceHttps: false
+
+services:
+  web:
+    build:
+      context: ./Saturnia.Web
+      dockerfile: Dockerfile
+    ports:
+      - 80:80
+    env:
+      - ASPNETCORE_ENVIRONMENT=Production
+    depends_on:
+      - api
+    expose: true   # esse container receberá tráfego externo
+
+  api:
+    build:
+      context: ./Saturnia.API
+      dockerfile: Dockerfile
+    ports:
+      - 5000:80
+    env:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - CONNECTION_STRING=postgresql://admin:admin@db:5432/saturnia
+    volumes:
+      - logs:/app/logs
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16
+    restart: always
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    env:
+      - POSTGRES_DB=saturnia
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+    expose: false   # não precisa ser exposto externamente
+
+volumes:
+  logs:
+  db-data:
+
+networks:
+  saturnia-net:
+    driver: bridge
+
+# Futuro: healthchecks, autoscale, resources
+# healthchecks:
+#   web:
+#     path: /health
+#     interval: 30s
+
+# resources:
+#   web:
+#     cpu: "0.5"
+#     memory: "512m"
