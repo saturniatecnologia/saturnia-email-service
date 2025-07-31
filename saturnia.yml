@@ -1,20 +1,16 @@
-# saturnia.yml
-# Arquivo de orquestração declarativa para a plataforma Saturnia
-
 version: "1.0"
 
-# Configuração global
 deployment:
   project: saturnia-demo
   environment: production
   defaultNetwork: saturnia-net
-  autoExpose: true     # Se true, o primeiro serviço com porta exposta será publicado automaticamente
-  entryService: web    # Define explicitamente qual é o ponto de entrada HTTP
+  autoExpose: true
+  entryService: web
   domains:
     - domain: app.saturnia.io
       service: web
-      proxy: true            # se true, irá criar automaticamente no nginx npm
-      ssl: true              # ativa ou não SSL via Nginx NPM
+      proxy: true
+      ssl: true
       forceHttps: true
     - domain: api.saturnia.io
       service: api
@@ -33,7 +29,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
     depends_on:
       - api
-    expose: true   # esse container receberá tráfego externo
+    expose: true
 
   api:
     build:
@@ -58,7 +54,7 @@ services:
       - POSTGRES_DB=saturnia
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=admin
-    expose: false   # não precisa ser exposto externamente
+    expose: false
 
 volumes:
   logs:
@@ -67,14 +63,3 @@ volumes:
 networks:
   saturnia-net:
     driver: bridge
-
-# Futuro: healthchecks, autoscale, resources
-# healthchecks:
-#   web:
-#     path: /health
-#     interval: 30s
-
-# resources:
-#   web:
-#     cpu: "0.5"
-#     memory: "512m"
